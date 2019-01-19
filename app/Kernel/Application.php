@@ -2,6 +2,7 @@
 
 namespace App\Kernel;
 
+use App\Controllers\DirectoryController;
 use App\Controllers\FileController;
 use App\Controllers\HomeController;
 use \Symfony\Component\HttpFoundation\Response as BaseResponse;
@@ -143,6 +144,12 @@ class Application
 		return Path::append($this->basePath, $path);
 	}
 
+	public function getUriTo($to)
+	{
+		$to = trim($to, "\\\/");
+		return config("app_url") . "/" . $to;
+	}
+
 	/**
 	 * @return Loader
 	 */
@@ -153,13 +160,27 @@ class Application
 
 	protected function route()
 	{
+
 		if (request()->get('file')) {
 			return (new FileController())->show();
 		}
-//
-//		if (Request::exist('list')) {
-//
-//		}
+
+		if (request()->has('action')) {
+
+			if (request()->server("HTTP_APP_KEY") !== config('app_key')){
+				return response()->create("", 403);
+			}
+
+			$controller = new DirectoryController();
+			switch (request()->get('action')){
+				case "upload":
+					break;
+				case "index":
+				case "default":
+					return $controller->index();
+					break;
+			}
+		}
 
 		return (new HomeController())->index();
 

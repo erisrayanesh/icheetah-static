@@ -187,6 +187,16 @@ if (! function_exists('data_set')) {
 	}
 }
 
+if (! function_exists('human_file_size')) {
+	function human_file_size($bytes, $decimals = 2)
+	{
+		$sz = 'BKMGTP';
+		$factor = floor((strlen($bytes) - 1) / 3);
+		return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$sz[$factor];
+	}
+}
+
+
 if (!function_exists("encrypt")){
 	/**
 	 *
@@ -219,8 +229,6 @@ if (!function_exists("path")){
 		return \App\Kernel\Tools\Path::make($data, $allowDots);
 	}
 }
-
-
 
 if (!function_exists("app")){
     /**
@@ -290,7 +298,18 @@ if (!function_exists("logger")){
 	 */
 	function logger()
 	{
-		return app('logger');
+		$logger = app('logger');
+		$args = func_get_args();
+
+		if (count($args) == 0){
+			return $logger;
+		}
+
+		foreach ($args as $arg) {
+			$logger->info($arg);
+		}
+
+		return $logger;
 	}
 }
 
@@ -316,4 +335,13 @@ if (!function_exists("image")){
 	}
 }
 
-
+if (!function_exists("files")){
+	/**
+	 *
+	 * @return \App\Kernel\FileSystem
+	 */
+	function files()
+	{
+		return app('files');
+	}
+}

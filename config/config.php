@@ -10,8 +10,9 @@ if (!is_array($arr)) {
 }
 
 $config = collect([
-	"app_key" => "",
 	"debug" => true,
+	"app_key" => "",
+	"app_url" => "",
 	"media_dir" => "media",
 	"log_file" => "logs" . DIRECTORY_SEPARATOR . "static.log",
 	"cache" => [

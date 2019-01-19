@@ -66,4 +66,11 @@ class Loader
 			return new ImageManager(['driver' => config('image.driver')]);
 		});
 	}
+
+	protected function loadFiles()
+	{
+		return $this->app->register('files', function (){
+			return new FileSystem();
+		});
+	}
 }

@@ -20,7 +20,7 @@
 	RewriteRule ^media/(.+) "index.php?file=$1" [QSA,L]
 
 	RewriteCond %{REQUEST_FILENAME} -d
-	RewriteRule ^media/(.+) "index.php?list=$1" [QSA,L]
+	RewriteRule ^media/(.+)? "index.php?action=index&path=$1" [QSA,L]
 
 	# Handle Front Controller...
 	RewriteCond %{REQUEST_FILENAME} !-d

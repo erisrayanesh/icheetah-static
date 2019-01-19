@@ -11,9 +11,11 @@ class FileProfile extends Collection
 
 	public static function capture(Request $request)
 	{
-		return new static($request->only([
+		return new static(array_filter($request->only([
 			"w", "h", "f", "wm",
-		]));
+		]), function ($value){
+			return !empty($value);
+		}));
 	}
 
 	public function __construct(array $items = array())
@@ -30,6 +32,16 @@ class FileProfile extends Collection
 		return implode("_", $set);
 	}
 
+	public function hasWatermark()
+	{
+		return $this->has("wm");
+	}
+
+	public function hasFit()
+	{
+		return $this->has("f");
+	}
+
 	public function getFitPos()
 	{
 		if (!$this->has("f")){
@@ -37,6 +49,16 @@ class FileProfile extends Collection
 		}
 
 		return $this->getPos($this->get("f"));
+	}
+
+	public function getWidth()
+	{
+		return $this->get('w');
+	}
+
+	public function getHeight()
+	{
+		return $this->get('w');
 	}
 
 	protected function getPos($pos, $default = "center")

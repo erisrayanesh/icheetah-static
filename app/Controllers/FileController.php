@@ -3,10 +3,10 @@
 namespace App\Controllers;
 
 use App\Kernel\Controller;
-use App\Kernel\FileProfile;
 use App\Kernel\Tools\Arr;
 use App\Kernel\Tools\Path;
 use App\Kernel\Tools\Str;
+use App\Kernel\FileProfile;
 use Intervention\Image\Image;
 use Intervention\Image\Size;
 
@@ -18,49 +18,100 @@ class FileController extends Controller
 			$original = app()->getPathTo("media" . DIRECTORY_SEPARATOR . request()->get("file"));
 			$profile = FileProfile::capture(request());
 
-			$cached = $this->getCachedFile($original, $profile);
-
-			if ($cached){
-				return response()->file($cached)->prepare(request());
+			//Send the original file when no modification is requested.
+			if ($profile->isEmpty()){
+				return response()->file($original)->prepare(request());
 			}
 
-			$img = image()->make($original);
-			if ($profile->has('f')){
-				$img = $img->fit($profile->w, $profile->h, function ($constraint) {
-					$constraint->upsize();
-				}, $profile->getFitPos());
-			}
-
-			if ($profile->has('wm')){
-				$wms = config('image.watermarks', []);
-				foreach ($wms as $wm) {
-					$type = Arr::get($wm, 'type');
-					$method = "apply" . Str::title($type) . "Watermark";
-					if (method_exists($this, $method)){
-						$this->{$method}($img, $wm);
-					}
+			if (($isCachingEnabled = $this->isCachingEnabled($original))) {
+				//Check if there is a cached file made from the current file profile
+				if (($cached = $this->getCachedFile($original, $profile)) !== false){
+					return response()->file($cached)->prepare(request());
 				}
 			}
 
-			// Cache generated file
-			$file = $this->getTokenizedFileName($original, $profile);
+			//Apply any modification requested such as resize, fit, optimize and etc.
+			$file = $this->getModifiedFile($original, $profile, $isCachingEnabled);
 
-			$img->save($file);
-			return response()->file($file)->prepare(request());
+			//Check if the output is a real cached file
+			if ($file instanceof \SplFileInfo && $isCachingEnabled){
+				return response()->file($file)->prepare(request());
+			}
+
+			if ($file instanceof Image){
+				//TODO:: response the image as raw
+			}
 
 		} catch (\Exception $e) {
 			dd($e);
-//			return response()->file($file)->prepare(request());
+			throw $e;
 		}
-
 	}
 
+	/**
+	 * @param \SplFileInfo $original
+	 * @return bool
+	 */
+	protected function isCachingEnabled(\SplFileInfo $original)
+	{
+		return config('cache.enable', true) &&
+				empty(config('cache.extensions', [])) &&
+				in_array(strtolower($original->getExtension()), config('cache.extensions', []));
+	}
+
+	/**
+	 * @param \SplFileInfo $original
+	 * @param FileProfile $profile
+	 * @param bool $cache
+	 * @return Image|\SplFileInfo
+	 */
+	protected function getModifiedFile(\SplFileInfo $original, FileProfile $profile, $cache = true)
+	{
+		$img = image()->make($original);
+
+		if ($profile->hasFit()){
+			$img = $img->fit($profile->getWidth(), $profile->getHeight(), function ($constraint) {
+				$constraint->upsize();
+			}, $profile->getFitPos());
+		}
+
+		if ($profile->hasWatermark()){
+			$wms = config('image.watermarks', []);
+			foreach ($wms as $wm) {
+				$type = Arr::get($wm, 'type');
+				$method = "apply" . Str::title($type) . "Watermark";
+				if (method_exists($this, $method)){
+					$this->{$method}($img, $wm);
+				}
+			}
+		}
+
+		if ($cache){
+			// Cache generated file
+			$file = $this->getTokenizedFileName($original, $profile);
+			$img->save($file);
+			return $file;
+		}
+
+		return $img;
+	}
+
+	/**
+	 * @param \SplFileInfo $original
+	 * @param FileProfile $profile
+	 * @return \SplFileInfo
+	 */
 	protected function getTokenizedFileName(\SplFileInfo $original, FileProfile $profile)
 	{
 		$file = basename($original->getFilename(), ".".$original->getExtension());
 		return Path::append($original->getPath(), $file . "_" . $profile->humanize() . "." . $original->getExtension());
 	}
 
+	/**
+	 * @param \SplFileInfo $original
+	 * @param FileProfile $profile
+	 * @return bool|\SplFileInfo
+	 */
 	protected function getCachedFile(\SplFileInfo $original, FileProfile $profile)
 	{
 		$file = $this->getTokenizedFileName($original, $profile);
