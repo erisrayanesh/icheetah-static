@@ -14,10 +14,9 @@ class FileController extends Controller
 {
 	public function show()
 	{
-		try {
+//		try {
 			$original = app()->getPathTo("media" . DIRECTORY_SEPARATOR . request()->get("file"));
 			$profile = FileProfile::capture(request());
-
 			//Send the original file when no modification is requested.
 			if ($profile->isEmpty()){
 				return response()->file($original)->prepare(request());
@@ -33,6 +32,7 @@ class FileController extends Controller
 			//Apply any modification requested such as resize, fit, optimize and etc.
 			$file = $this->getModifiedFile($original, $profile, $isCachingEnabled);
 
+
 			//Check if the output is a real cached file
 			if ($file instanceof \SplFileInfo && $isCachingEnabled){
 				return response()->file($file)->prepare(request());
@@ -42,10 +42,9 @@ class FileController extends Controller
 				//TODO:: response the image as raw
 			}
 
-		} catch (\Exception $e) {
-			dd($e);
-			throw $e;
-		}
+//		} catch (\Exception $e) {
+//			throw $e;
+//		}
 	}
 
 	/**
@@ -55,8 +54,8 @@ class FileController extends Controller
 	protected function isCachingEnabled(\SplFileInfo $original)
 	{
 		return config('cache.enable', true) &&
-				empty(config('cache.extensions', [])) &&
-				in_array(strtolower($original->getExtension()), config('cache.extensions', []));
+			(empty(config('cache.extensions', [])) ||
+			in_array(strtolower($original->getExtension()), config('cache.extensions', [])));
 	}
 
 	/**
@@ -85,6 +84,9 @@ class FileController extends Controller
 				}
 			}
 		}
+
+//		$im->setImageCompression(Imagick::COMPRESSION_JPEG);
+//		$im->setImageCompressionQuality(25);
 
 		if ($cache){
 			// Cache generated file

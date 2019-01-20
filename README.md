@@ -15,7 +15,7 @@ git clone https://github.com/erisrayanesh/icheetah-static.git
 
 ## Setup
 1.	Clone the project.
-2.	Create a directory and name it **`media`**.
+2.	Create a directory and name it **`media`** in the project root directory.
 3.	Now you are good to go.	
 
 ## Change `media` root directory name

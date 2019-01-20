@@ -58,7 +58,7 @@ class FileProfile extends Collection
 
 	public function getHeight()
 	{
-		return $this->get('w');
+		return $this->get('h');
 	}
 
 	protected function getPos($pos, $default = "center")
