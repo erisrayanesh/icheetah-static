@@ -52,8 +52,8 @@ class Application
 			$response = response()->create($response);
 		}
 
-		logger()->info(SYSTEM_START);
-		logger()->info(microtime(true));
+//		logger(SYSTEM_START);
+//		logger(microtime(true));
 		$response->send();
 	}
 
