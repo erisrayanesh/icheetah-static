@@ -1,6 +1,5 @@
-/node_modules
 /vendor
 /.idea
-/media
 .htaccess
 .env
+/media/
